@@ -5,5 +5,9 @@
   "main": "index.js",
   "repository": "git@github.com:TomDotBat/advent-of-code-bot.git",
   "author": "TomDotBat <tom@tomdotbat.dev>",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^12.5.1",
+    "dotenv": "^8.2.0"
+  }
 }
