@@ -1,7 +1,7 @@
 
 import https from "https";
 import {ClientRequest, IncomingMessage} from "http";
-import {Client, Collection, Guild, TextChannel, Message} from "discord.js";
+import {Client, TextChannel, Message} from "discord.js";
 import Config from "../config";
 
 let errorAndExit = (err: string) => {
@@ -99,34 +99,15 @@ class LeaderboardResponse {
 }
 
 export default class Leaderboard {
-    public guild: Guild;
-    public leaderboardChannel: TextChannel;
+    public channel: TextChannel;
     public bot: Client;
     public config: Config;
     public timer: NodeJS.Timeout;
 
-    public static async build(guild: Guild, bot: Client, config: Config): Promise<Leaderboard> {
+    constructor(channel: TextChannel, bot: Client, config: Config) {
         console.log("Initialising leaderboard...");
 
-        let channelId: string = config.get("LEADERBOARD_CHANNEL");
-        if (channelId == "") {
-            let channel: TextChannel = await Leaderboard.createChannel(guild);
-            config.set("LEADERBOARD_CHANNEL", channel.id);
-            return new Leaderboard(guild, channel, bot, config);
-        }
-
-        let channelManager = guild.channels;
-        let resolvedId: string | null = channelManager.resolveID(channelId)
-        if (!resolvedId) errorAndExit("Couldn't find the leaderboard channel.");
-
-        let channel: TextChannel = channelManager.resolve(resolvedId as string) as TextChannel;
-        console.log(`Leaderboard channel found: #${channel.name}`);
-        return new Leaderboard(guild, channel, bot, config);
-    }
-
-    constructor(guild: Guild, leaderboardChannel: TextChannel, bot: Client, config: Config) {
-        this.guild = guild;
-        this.leaderboardChannel = leaderboardChannel;
+        this.channel = channel;
         this.bot = bot;
         this.config = config;
         this.lastLeaderboard = null;
@@ -145,7 +126,9 @@ export default class Leaderboard {
         let leaderboard = await this.getLeaderboard();
 
         if (leaderboardMsg) {leaderboardMsg.edit({embed: leaderboard.getEmbed(this.config)}); return;}
-        this.leaderboardChannel.send({embed: leaderboard.getEmbed(this.config)});
+        this.channel.send({embed: leaderboard.getEmbed(this.config)});
+
+        this.lastLeaderboard = leaderboard;
     }
 
     public getLeaderboard(): Promise<LeaderboardResponse> {
@@ -169,7 +152,7 @@ export default class Leaderboard {
     }
 
     public findLeaderboard(searchLimit: number = 10, removeTrash = true): Promise<Message | undefined> {
-        return this.leaderboardChannel.messages.fetch({limit: searchLimit})
+        return this.channel.messages.fetch({limit: searchLimit})
         .then(messages => {
             let leaderboardMsg: Message | undefined;
 
@@ -187,18 +170,4 @@ export default class Leaderboard {
     }
 
     private lastLeaderboard: LeaderboardResponse | null;
-
-    private static async createChannel(guild: Guild): Promise<TextChannel> {
-        return await guild.channels.create("aoc-leaders", {
-            topic: "See the status of the Advent of Code private leaderboard.",
-            reason: "Needed for the Advent of Code Leaderboard bot.",
-            permissionOverwrites: [
-                {
-                    id: guild.roles.everyone,
-                    deny: ["SEND_MESSAGES"],
-                    type: "role"
-                }
-            ]
-        });
-    }
 }
