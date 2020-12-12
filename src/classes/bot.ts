@@ -45,7 +45,7 @@ export default class Bot extends discord.Client {
             return;
         })
         .then(async () => this.leaderboard = new Leaderboard(this.targetChannel as TextChannel, this, this.config))
-        .then(() => new PuzzleAlerter(this.targetChannel as TextChannel));
+        .then(() => new PuzzleAlerter(this.targetChannel as TextChannel, this));
     }
 
     public async createChannel(): Promise<TextChannel> {
