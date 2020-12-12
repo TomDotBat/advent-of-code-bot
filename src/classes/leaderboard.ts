@@ -129,14 +129,14 @@ export default class Leaderboard {
         let leaderboardMsg: Message | undefined = await this.findLeaderboard();
         let leaderboard = await this.getLeaderboard();
 
-        if (leaderboardMsg) {leaderboardMsg.edit({embed: leaderboard.getEmbed(this.config)}); return;}
-        this.channel.send({embed: leaderboard.getEmbed(this.config)});
-
         this.bot.user?.setPresence({activity: {
             name: "AoC Leaderboard - Leader: " + leaderboard.getLeaderName().name,
             type: "WATCHING"
         }, status: "online"})
         .catch(console.error);
+
+        if (leaderboardMsg) {leaderboardMsg.edit({embed: leaderboard.getEmbed(this.config)}); return;}
+        this.channel.send({embed: leaderboard.getEmbed(this.config)});
 
         this.lastLeaderboard = leaderboard;
     }
