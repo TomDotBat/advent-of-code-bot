@@ -4,7 +4,7 @@ import Bot from "./classes/bot";
 const bot = new Bot();
 
 bot.on("ready", () => {
-    console.log(`Logged in as: ${bot.user?.tag}`);
+    console.log(`Logged in as: ${bot.user?.tag}.`);
     bot.setup();
 });
 

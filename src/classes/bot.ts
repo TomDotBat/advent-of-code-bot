@@ -24,7 +24,7 @@ export default class Bot extends discord.Client {
             if (!guild) errorAndExit("Guild not found with specified ID.");
 
             this.targetGuild = guild;
-            console.log(`Target guild found: ${guild.name}`);
+            console.log(`Target guild found: ${guild.name}.`);
 
             return guild;
         })
@@ -41,7 +41,7 @@ export default class Bot extends discord.Client {
             if (!resolvedId) errorAndExit("Couldn't find the Advent of Code channel.");
 
             this.targetChannel = channelManager.resolve(resolvedId as string) as TextChannel;
-            console.log(`Advent of Code channel found: #${this.targetChannel?.name}`);
+            console.log(`Advent of Code channel found: #${this.targetChannel?.name}.`);
             return;
         })
         .then(async () => this.leaderboard = new Leaderboard(this.targetChannel as TextChannel, this, this.config))
