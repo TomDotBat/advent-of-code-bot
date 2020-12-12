@@ -76,8 +76,12 @@ class LeaderboardResponse {
         return memberList.reverse();
     }
 
-    public getLeaderName(): LeaderboardMember {
-        return this.getSortedMembers()[0];
+    public getOwnerName(): string {
+        return this.members.get(this.ownerId)?.name as string;
+    }
+
+    public getLeaderName(): string {
+        return this.getSortedMembers()[0].name;
     }
 
     public getEmbed(config: Config): any {
@@ -90,7 +94,7 @@ class LeaderboardResponse {
             color: Math.floor(Math.random() * 2) == 0 ? 12138040 : 2852409,
             fields: []
         }
-        
+
         this.getSortedMembers().forEach(member => {
             embed.fields.push({
                 name: `${(embed.fields.length + 1).toString()}: ${member.name}`,
@@ -130,15 +134,18 @@ export default class Leaderboard {
         let leaderboard = await this.getLeaderboard();
 
         this.bot.user?.setPresence({activity: {
-            name: "AoC Leaderboard - Leader: " + leaderboard.getLeaderName().name,
+            name: "AoC Leaderboard - Leader: " + leaderboard.getLeaderName(),
             type: "WATCHING"
         }, status: "online"})
         .catch(console.error);
 
-        if (leaderboardMsg) {leaderboardMsg.edit({embed: leaderboard.getEmbed(this.config)}); return;}
-        this.channel.send({embed: leaderboard.getEmbed(this.config)});
+        this.alertNewMembers(leaderboard);
+        this.alertPuzzleCompletion(leaderboard);
 
         this.lastLeaderboard = leaderboard;
+
+        if (leaderboardMsg) {leaderboardMsg.edit({embed: leaderboard.getEmbed(this.config)}); return;}
+        this.channel.send({embed: leaderboard.getEmbed(this.config)});
     }
 
     public getLeaderboard(): Promise<LeaderboardResponse> {
@@ -176,6 +183,43 @@ export default class Leaderboard {
             });
 
             return leaderboardMsg;
+        });
+    }
+
+    private alertNewMembers(newLeaderboard: LeaderboardResponse) {
+        if (!this.lastLeaderboard) return;
+        
+        let oldMembers = this.lastLeaderboard.members;
+        newLeaderboard.members.forEach((member, id) => {
+            if (oldMembers.has(id)) return;
+            this.channel.send(`${member.name} has joined ${newLeaderboard.getOwnerName()}'s private leaderboard.`);
+        });
+    }
+
+    private alertPuzzleCompletion(newLeaderboard: LeaderboardResponse) {
+        if (!this.lastLeaderboard) return;
+
+        let oldMembers = this.lastLeaderboard.members;
+        newLeaderboard.members.forEach((newMember, id) => {
+            let oldMember = oldMembers.get(id);
+            if (!oldMember) return;
+            
+            let oldMemberDays = oldMember.days;
+            newMember.days.forEach((newDay, key) => {
+                let oldDay = oldMemberDays.get(key);
+                if (!oldDay) {
+                    if (newDay.star2Time) {
+                        this.channel.send(`${newMember.name} has completed part 1 and 2 of puzzle ${key}.`);
+                        return;
+                    }
+
+                    this.channel.send(`${newMember.name} has completed part 1 of puzzle ${key}.`);
+                    return;
+                }
+                
+                if (oldDay.star2Time || !newDay.star2Time) return;
+                this.channel.send(`${newMember.name} has completed part 2 of puzzle ${key}.`);
+            });
         });
     }
 
